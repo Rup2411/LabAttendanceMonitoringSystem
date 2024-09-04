@@ -10,12 +10,17 @@ import org.springframework.stereotype.Service;
 
 import com.lab.attendance.monetoring.system.dtos.AttendanceRequestDto;
 import com.lab.attendance.monetoring.system.entities.AttendanceEntity;
+import com.lab.attendance.monetoring.system.entities.FineEntity;
 import com.lab.attendance.monetoring.system.entities.LabSessionEntity;
+import com.lab.attendance.monetoring.system.entities.StudentAbsenceCount;
 import com.lab.attendance.monetoring.system.exceptions.CustomException;
 import com.lab.attendance.monetoring.system.repos.AttendanceRepo;
+import com.lab.attendance.monetoring.system.repos.FineRepo;
 import com.lab.attendance.monetoring.system.repos.LabRepo;
 import com.lab.attendance.monetoring.system.repos.LabSessionRepo;
+import com.lab.attendance.monetoring.system.repos.StudentAbscenceCountRepo;
 import com.lab.attendance.monetoring.system.service.AttendanceService;
+import com.lab.attendance.monetoring.system.service.FineService;
 
 @Service
 public class AttendanceServiceImpl implements AttendanceService {
@@ -28,6 +33,15 @@ public class AttendanceServiceImpl implements AttendanceService {
 
 	@Autowired
 	AttendanceRepo attendanceRepo;
+	
+	@Autowired
+	StudentAbscenceCountRepo abscenceCountRepo;
+	
+	@Autowired
+	FineService fineService;
+	
+	@Autowired
+	FineRepo fineRepo;
 
 	@Override
 	public void markAttendance(AttendanceRequestDto dto) {
@@ -45,17 +59,36 @@ public class AttendanceServiceImpl implements AttendanceService {
 		
 		for(Long rollNo : studentRollNos) {
 			
-			AttendanceEntity entity = new AttendanceEntity();
+			FineEntity fine = fineRepo.getByStudentRollNo(String.valueOf(rollNo))
+					.orElseThrow(() -> new CustomException("Student Not Found For Roll No " + rollNo));
 			
-			entity.setLabSessionId(session.getLabSessionId());
-			entity.setStudentRollNo(rollNo);
-			if(dto.getStudentRollNos().contains(rollNo) && (session.getLabSessionDate().equals(LocalDate.now()))) {
-				entity.setPresent(true);
+			if(fine.isFineActive() == false) {
+				
+				AttendanceEntity entity = new AttendanceEntity();
+				
+				entity.setLabSessionId(session.getLabSessionId());
+				entity.setStudentRollNo(rollNo);
+				if(dto.getStudentRollNos().contains(rollNo) && (session.getLabSessionDate().equals(LocalDate.now()))) {
+					entity.setPresent(true);
+				}
+				else {
+					entity.setPresent(false);
+					
+					StudentAbsenceCount absent = new StudentAbsenceCount();
+					
+					absent.setStudentRollNo(String.valueOf(entity.getStudentRollNo()));
+					absent.setAbsentCount(abscenceCountRepo.absentCount(String.valueOf(entity.getStudentRollNo())) + 1);
+					
+					StudentAbsenceCount count = abscenceCountRepo.save(absent);
+					
+					if(count.getAbsentCount() >= 2) {
+						fineService.applyFine(String.valueOf(entity.getStudentRollNo()));
+					}
+					
+				}
+				attendanceRepo.save(entity);
 			}
-			else {
-				entity.setPresent(false);
-			}
-			attendanceRepo.save(entity);
+			
 		}
 	}
 

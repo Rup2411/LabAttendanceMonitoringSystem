@@ -7,4 +7,6 @@ import jakarta.servlet.http.HttpServletRequest;
 public interface LabSessionService {
 
 	LabSessionDto createSession(LabSessionDto dto, HttpServletRequest request);
+
+	LabSessionDto getSessionBySessionId(String sessionId);
 }

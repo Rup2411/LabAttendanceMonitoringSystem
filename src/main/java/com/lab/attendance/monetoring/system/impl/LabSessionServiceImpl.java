@@ -220,6 +220,15 @@ public class LabSessionServiceImpl implements LabSessionService {
 		}
 		return true;
 	}
+	
+	@Override
+	public LabSessionDto getSessionBySessionId(String sessionId) {
+		
+		LabSessionEntity entity = labSessionRepo.findByLabSessionId(sessionId)
+				.orElseThrow(() -> new CustomException("Session Not Found For Session ID : " + sessionId));
+		
+		return toDto(entity);
+	}
 
 
 }
