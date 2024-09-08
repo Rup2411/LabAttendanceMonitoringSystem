@@ -1,5 +1,6 @@
 package com.lab.attendance.monetoring.system.repos;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,4 +16,7 @@ public interface StudentAbscenceCountRepo extends JpaRepository<StudentAbsenceCo
 	
 	@Query(value = "select * from student_absence_count where student_roll_no = :x", nativeQuery = true)
 	Optional<StudentAbsenceCount> absentCountByRollNo(@Param("x") String rollNo);
+
+	@Query(value = "select student_roll_no as studentRollNo from student_absence_count", nativeQuery = true)
+	Map<String, String> finaAllStudentsEligibleForFine();
 }

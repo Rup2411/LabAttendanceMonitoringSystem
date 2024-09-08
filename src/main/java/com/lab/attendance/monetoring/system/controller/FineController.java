@@ -2,7 +2,6 @@ package com.lab.attendance.monetoring.system.controller;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,12 +10,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.lab.attendance.monetoring.system.dtos.UserDto;
 import com.lab.attendance.monetoring.system.entities.FineEntity;
 import com.lab.attendance.monetoring.system.exceptions.CustomException;
 import com.lab.attendance.monetoring.system.service.FineService;
@@ -57,6 +54,25 @@ public class FineController {
 			FineEntity fineDetails = fineService.getByStudentRollNo(rollNo);
 
 			map.put("students", fineDetails);
+
+			return new ResponseEntity<>(map, HttpStatus.OK);
+		} catch (CustomException e) {
+			Map<String, String> errorResponse = new HashMap<>();
+			errorResponse.put("error", e.getMessage());
+
+			return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+		}
+	}
+	
+	@GetMapping("/all/fine/students")
+	public ResponseEntity<?> studentsEligibleForFine(HttpServletRequest request) {
+
+		try {
+			Map<String, Map<String, String>> map = new HashMap<>();
+
+			Map<String, String> students = fineService.allStudentsWithFine(request);
+
+			map.put("studentsEligibleForFine", students);
 
 			return new ResponseEntity<>(map, HttpStatus.OK);
 		} catch (CustomException e) {
