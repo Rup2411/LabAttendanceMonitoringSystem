@@ -22,6 +22,10 @@ public class UserDto {
 	private String mobileNumber;
 
 	private String email;
+	
+	private String parentEmail;
+	
+	private String localGuardianEmail;
 
 	private String password;
 

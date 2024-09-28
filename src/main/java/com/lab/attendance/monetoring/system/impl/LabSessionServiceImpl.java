@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,10 +14,13 @@ import org.springframework.stereotype.Service;
 import com.lab.attendance.monetoring.system.dtos.LabSessionDto;
 import com.lab.attendance.monetoring.system.entities.LabEntity;
 import com.lab.attendance.monetoring.system.entities.LabSessionEntity;
+import com.lab.attendance.monetoring.system.entities.UserEntity;
 import com.lab.attendance.monetoring.system.exceptions.CustomException;
 import com.lab.attendance.monetoring.system.jwtUtils.JwtTokenHelper;
 import com.lab.attendance.monetoring.system.repos.LabRepo;
 import com.lab.attendance.monetoring.system.repos.LabSessionRepo;
+import com.lab.attendance.monetoring.system.repos.UserRepo;
+import com.lab.attendance.monetoring.system.service.EmailService;
 import com.lab.attendance.monetoring.system.service.LabSessionService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,6 +37,12 @@ public class LabSessionServiceImpl implements LabSessionService {
 	
 	@Autowired
 	JwtTokenHelper jwtTokenHelper;
+	
+	@Autowired
+	UserRepo userRepo;
+	
+	@Autowired
+	EmailService emailService;
 	
 	private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("hh:mm a");
 	private static final List<String> VALID_SESSION_TYPES = Arrays.asList("PRACTICAL", "TUTORIAL", "WORKSHOP");
@@ -68,6 +78,21 @@ public class LabSessionServiceImpl implements LabSessionService {
 			labRepo.save(labEntity);
 			
 			LabSessionEntity savedSession = labSessionRepo.save(entity);
+			
+	        Set<String> rollNos = labEntity.getEnrolledStudentsRollNo();
+	        
+	        for (String rollNo : rollNos) {
+	        	
+	        	UserEntity student = userRepo.findByRollNo(rollNo).orElseThrow(null);
+	        	
+	        	String subject = "New Lab Session Created";
+		        String body = "Dear " + student.getName() + ",\n\nA new lab session has been created for the lab " + labEntity.getLabName() + ".\n" +
+		                              "Session Date: " + dto.getLabSessionDate() +"\nStart Time: " + dto.getStartTime() +"\nEnd Time: " + dto.getEndTime() +"\n\nPlease make sure to attend.\n\n" +
+		                              "Best regards,\nBBIT Lab Team";
+	            
+	            emailService.sendEmail(List.of(student.getEmail()), subject, body);
+	        }
+	        
 			
 			return toDto(savedSession);
 		} else {

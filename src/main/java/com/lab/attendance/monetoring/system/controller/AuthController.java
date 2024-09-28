@@ -27,6 +27,8 @@ import com.lab.attendance.monetoring.system.jwtUtils.JwtResponseDto;
 import com.lab.attendance.monetoring.system.jwtUtils.JwtTokenHelper;
 import com.lab.attendance.monetoring.system.service.UserService;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -45,10 +47,10 @@ public class AuthController {
 
 	@PostMapping("/register")
 	public ResponseEntity<?> registerUser(@ModelAttribute UserDto dto,
-			@RequestParam(required = false) MultipartFile image) {
+			@RequestParam(required = false) MultipartFile image, HttpServletRequest request) {
 
 		try {
-			UserDto userDto = userService.createUser(dto, image);
+			UserDto userDto = userService.createUser(dto, image, request);
 
 			Map<String, UserDto> response = new HashMap<>();
 
@@ -67,6 +69,7 @@ public class AuthController {
 		} catch (Exception e) {
 			Map<String, String> errorResponse = new HashMap<>();
 			errorResponse.put("error", "An error occurred while processing the image.");
+			System.out.println(e.getMessage());
 
 			return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
 		}

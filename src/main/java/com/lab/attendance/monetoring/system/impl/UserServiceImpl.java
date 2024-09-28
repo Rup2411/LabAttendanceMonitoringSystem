@@ -16,9 +16,11 @@ import com.lab.attendance.monetoring.system.entities.UserEntity;
 import com.lab.attendance.monetoring.system.exceptions.CustomException;
 import com.lab.attendance.monetoring.system.jwtUtils.JwtTokenHelper;
 import com.lab.attendance.monetoring.system.repos.UserRepo;
+import com.lab.attendance.monetoring.system.service.EmailService;
 import com.lab.attendance.monetoring.system.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -31,37 +33,58 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	JwtTokenHelper jwtTokenHelper;
+	
+	@Autowired
+	EmailService emailService;
 
 	private static final List<String> VALID_ROLES = Arrays.asList("LAB_ADMIN", "FACULTY", "INSTRUCTOR", "STUDENT");
-
+	
+	private static final List<String> ADMIN_ROLES = Arrays.asList("LAB_ADMIN", "FACULTY", "INSTRUCTOR");
+	
+	
+	@Transactional
 	@Override
-	public UserDto createUser(UserDto dto, MultipartFile image) {
+    public UserDto createUser(UserDto dto, MultipartFile image, HttpServletRequest request) {
 
-		int email = userRepo.countByEmail(dto.getEmail());
+        String role = jwtTokenHelper.getRoleFromToken(request);
 
-		if (email > 0) {
-			throw new CustomException("Account Already Exists With Email : " + dto.getEmail());
-		}
+        if (ADMIN_ROLES.contains(role)) {
 
-		int number = userRepo.countByContactNumber(dto.getMobileNumber());
+            if (userRepo.countByEmail(dto.getEmail()) > 0) {
+                throw new CustomException("Account Already Exists With Email : " + dto.getEmail());
+            }
 
-		if (number > 0) {
-			throw new CustomException("Account Already Exists With Contact Number : " + dto.getMobileNumber());
-		}
+            if (userRepo.countByContactNumber(dto.getMobileNumber()) > 0) {
+                throw new CustomException("Account Already Exists With Contact Number : " + dto.getMobileNumber());
+            }
 
-		int rollNo = userRepo.countByRollNo(dto.getRollNo());
+            if (userRepo.countByRollNo(dto.getRollNo()) > 0) {
+                throw new CustomException("Account Already Exists With Roll Number : " + dto.getRollNo());
+            }
 
-		if (rollNo > 0) {
-			throw new CustomException("Account Already Exists With Roll Number : " + dto.getRollNo());
-		}
+            UserEntity entity = toEntity(dto, image);
+            UserEntity savedEntity = userRepo.save(entity);
 
-		UserEntity entity = toEntity(dto, image);
+            String subject = "Registration Confirmation";
+            
+            String body = "Dear " + dto.getName() + ",\n\n" +
+                          "Congratulations! You have been successfully registered to BBIT Lab Portal:\n\n" +
+                          "Email: " + dto.getEmail() + "\n\n" +
+                          "Mobile: " + dto.getMobileNumber() + "\n\n" +
+                          "Roll No: " + dto.getRollNo() + "\n\n" +
+                          "Thank you for registering with us.\n\n" +
+                          "Best regards,\n" +
+                          "BBIT Lab Team";
 
-		UserEntity savedEntity = userRepo.save(entity);
+            emailService.sendEmail(List.of(dto.getEmail()), subject, body);
 
-		return toDto(savedEntity);
+            return toDto(savedEntity);
 
-	}
+        } else {
+            throw new CustomException("Contact the Lab Admin or Instructor to register");
+        }
+    }
+		
 
 	private UserEntity toEntity(UserDto dto, MultipartFile image) {
 
@@ -73,6 +96,8 @@ public class UserServiceImpl implements UserService {
 		entity.setEmail(dto.getEmail());
 		entity.setMobileNumber(dto.getMobileNumber());
 		entity.setPassword(encoder.encode(dto.getPassword()));
+		entity.setParentEmail(dto.getParentEmail());
+		entity.setLocalGuardianEmail(dto.getLocalGuardianEmail());
 
 		if (VALID_ROLES.contains(dto.getRole())) {
 			entity.setRole(dto.getRole());
@@ -103,6 +128,8 @@ public class UserServiceImpl implements UserService {
 		dto.setMobileNumber(entity.getMobileNumber());
 		dto.setPassword(entity.getPassword());
 		dto.setRole(entity.getRole());
+		dto.setParentEmail(entity.getParentEmail());
+		dto.setLocalGuardianEmail(entity.getLocalGuardianEmail());
 
 		return dto;
 	}

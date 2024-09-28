@@ -1,5 +1,6 @@
 package com.lab.attendance.monetoring.system.service;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -13,8 +14,6 @@ public interface UserService {
 
 	UserDto getUserByEmail(String email);
 
-	UserDto createUser(UserDto dto, MultipartFile image);
-
 	byte[] getImageByEmail(String email);
 
 	List<UserDto> getAllStudentUsers(HttpServletRequest request);
@@ -22,4 +21,6 @@ public interface UserService {
 	UserDto getUserByRollNo(String rollNo);
 
 	UserDto toDto(UserEntity entity);
+
+	UserDto createUser(UserDto dto, MultipartFile image, HttpServletRequest request) throws UnsupportedEncodingException;
 }

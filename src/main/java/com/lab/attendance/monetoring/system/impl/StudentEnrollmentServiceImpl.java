@@ -21,6 +21,7 @@ import com.lab.attendance.monetoring.system.jwtUtils.JwtTokenHelper;
 import com.lab.attendance.monetoring.system.repos.LabRepo;
 import com.lab.attendance.monetoring.system.repos.LabSessionRepo;
 import com.lab.attendance.monetoring.system.repos.UserRepo;
+import com.lab.attendance.monetoring.system.service.EmailService;
 import com.lab.attendance.monetoring.system.service.LabService;
 import com.lab.attendance.monetoring.system.service.StudentEnrollmentService;
 import com.lab.attendance.monetoring.system.service.UserService;
@@ -47,6 +48,9 @@ public class StudentEnrollmentServiceImpl implements StudentEnrollmentService {
 
 	@Autowired
 	JwtTokenHelper jwtTokenHelper;
+	
+	@Autowired
+	EmailService emailService;
 
 	@Override
 	public List<Map<String, Map<String, String>>> enrollStudentsinLab(String rollNo, Set<String> labCodes,
@@ -65,6 +69,8 @@ public class StudentEnrollmentServiceImpl implements StudentEnrollmentService {
 
 		UserEntity entity = userRepo.findByRollNo(rollNo)
 				.orElseThrow(() -> new CustomException("Student Not Found For Roll No: " + rollNo));
+		
+		List<String> successfullyEnrolledLabs = new ArrayList<>();
 
 		for (String labCode : labCodes) {
 
@@ -77,6 +83,8 @@ public class StudentEnrollmentServiceImpl implements StudentEnrollmentService {
 					entity.getEnrolledLabCodes().add(labCode);
 
 					enrolledLabs.put(labCode, "Enrolled");
+					
+					successfullyEnrolledLabs.add(labCode);
 				} else {
 
 					nonEnrolledLabs.put(labCode, "Already Enrolled");
@@ -100,6 +108,17 @@ public class StudentEnrollmentServiceImpl implements StudentEnrollmentService {
 				nonEnrolledLabs.put(labCode, e.getMessage());
 			}
 		}
+		
+		if (!successfullyEnrolledLabs.isEmpty()) {
+	        String subject = "Lab Enrollment Confirmation";
+	        String body = "Dear " + entity.getName() + ",\n\n" +
+	                      "You have been successfully enrolled in the following lab(s):\n\n" +
+	                      String.join(", ", successfullyEnrolledLabs) + "\n\n" +
+	                      "Best regards,\n" +
+	                      "BBIT Lab Team";
+
+	        emailService.sendEmail(List.of(entity.getEmail()), subject, body);
+	    }
 
 		List<Map<String, Map<String, String>>> result = new ArrayList<>();
 		Map<String, Map<String, String>> enrolledMap = new HashMap<>();
