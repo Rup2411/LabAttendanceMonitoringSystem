@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+	<style>
+	       body {
+	           background-color: #f8f9fa;
+	       }
+	       .form-container {
+	           max-width: 600px;
+	           margin: 50px auto;
+	           padding: 20px;
+	           background: #ffffff;
+	           border-radius: 8px;
+	           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	       }
+	       h1 {
+	           text-align: center;
+	           margin-bottom: 30px;
+	           color: #343a40;
+	       }
+	       .form-group label {
+	           font-weight: bold;
+	       }
+	       .btn-primary {
+	           width: 100%;
+	       }
+	   </style>
+</head>
+<body>
+    <div class="container form-container">
+        <div class="card">
+            <div class="card-header bg-primary text-white">Register</div>
+            <div class="card-body">
+                <form id="registerForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="name">Name:</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="rollNo">Roll No:</label>
+                        <input type="number" class="form-control" id="rollNo" name="rollNo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="department">Department:</label>
+                        <input type="text" class="form-control" id="department" name="department" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mobileNumber">Mobile Number:</label>
+                        <input type="text" class="form-control" id="mobileNumber" name="mobileNumber" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="role">User Role:</label>
+                        <select class="form-control" id="role" name="role" required>
+                            <option value="" disabled selected>Select User Role</option>
+                            <option value="STUDENT">Student</option>
+                            <option value="LAB_ADMIN">Lab Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="parentEmail">Parent Email:</label>
+                        <input type="email" class="form-control" id="parentEmail" name="parentEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="localGuardianEmail">Local Guardian Email:</label>
+                        <input type="email" class="form-control" id="localGuardianEmail" name="localGuardianEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="image">Profile Image:</label>
+                        <input type="file" class="form-control-file" id="image" name="image">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Register</button>
+                </form>
+                <div id="errorMessage" class="mt-3 text-danger text-center"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('registerForm').onsubmit = async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(this);
+
+            try {
+                const token = localStorage.getItem('token');
+                
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    window.location.href = '/api/auth/dashboard';
+                } else {
+                    const errorData = await response.json();
+                    document.getElementById('errorMessage').innerText = errorData.error || 'Registration failed.';
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').innerText = 'An error occurred. Please try again.';
+            }
+        };
+    </script>
+</body>
+</html>

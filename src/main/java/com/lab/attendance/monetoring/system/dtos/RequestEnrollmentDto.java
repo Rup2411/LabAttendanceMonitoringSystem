@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RequestEnrollmentDto {
 
-	private String rollNo;
+	private Set<String> rollNos;
 
 	private Set<String> labCodes;
 }

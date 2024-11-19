@@ -19,7 +19,7 @@ public interface LabSessionRepo extends JpaRepository<LabSessionEntity, Long> {
 	List<LabSessionEntity> findActiveSessionsByInstructorAndDate(@Param("x")String instructorName,@Param("y") LocalDate labSessionDate);
 
 	@Query(value = "SELECT * FROM lab_session_entity WHERE lab_session_id = :x", nativeQuery = true)
-	Optional<LabSessionEntity> findByLabSessionId(@Param("x")String labSessionId);
+	Optional<LabSessionEntity> findByLabSessionId(@Param("x") String labSessionId);
 	
 	@Query(value = """
 			select a.roll_no from user_entity a
@@ -30,5 +30,11 @@ public interface LabSessionRepo extends JpaRepository<LabSessionEntity, Long> {
 			where c.lab_session_id = :x 
 			""", nativeQuery = true)
 	List<Long> findStudentRollNosByLabSessionId(@Param("x")String labSessionId);
+
+	@Query(value = "SELECT * FROM lab_session_entity WHERE lab_code = :x", nativeQuery = true)
+	List<LabSessionEntity> findAllByLabCode(@Param("x") String labCode);
+
+	@Query(value = "select * from lab_session_entity order by session_status desc", nativeQuery = true)
+	List<LabSessionEntity> findAllOrderByStatus();
 
 }

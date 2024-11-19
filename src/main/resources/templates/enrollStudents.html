@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enroll Students</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f1f3f5;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            font-weight: 600;
+            color: #343a40;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #007bff;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        .list-group-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        .list-group-item .student-name,
+        .list-group-item .lab-name {
+            flex: 1;
+            font-weight: 500;
+        }
+        .checkbox-wrapper {
+            text-align: right;
+        }
+        .checkbox-wrapper input {
+            transform: scale(1.2);
+        }
+        .row {
+            margin-top: 30px;
+        }
+        #saveButton {
+            background-color: #007bff;
+            color: white;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        #saveButton:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        #errorMessage {
+            margin-top: 20px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: center;
+        }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Enroll Students</h1>
+        <div id="errorMessage" class="text-danger"></div>
+
+        <div class="row">
+            <!-- Students Section -->
+            <div id="studentsSection" class="col-md-6">
+                <div class="card">
+                    <h2 class="section-title">Students</h2>
+                    <ul id="students" class="list-group"></ul>
+                </div>
+            </div>
+
+            <!-- Labs Section -->
+            <div id="labsSection" class="col-md-6">
+                <div class="card">
+                    <h2 class="section-title">Labs</h2>
+                    <ul id="labs" class="list-group"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="form-group text-center">
+            <button id="saveButton" class="btn btn-primary">Save Enrollment</button>
+        </div>
+    </div>
+
+    <script>
+        function getLabCodeFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('labCode');
+        }
+
+        async function fetchStudents() {
+            try {
+                const token = localStorage.getItem('token');
+                let url = `/api/user/all/students`;
+              
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const students = data.students || [];
+                    const studentList = document.getElementById('students');
+                    students.forEach(student => {
+                        const li = document.createElement('li');
+                        li.classList.add('list-group-item');
+                        li.innerHTML = ` 
+                            <span class="student-name">${student.name} (${student.rollNo})</span>
+                            <div class="checkbox-wrapper">
+                                <input type="checkbox" value="${student.rollNo}" class="student-checkbox">
+                            </div>
+                        `;
+                        studentList.appendChild(li);
+                    });
+
+                    document.getElementById('studentsSection').style.display = 'block';
+                } else {
+                    const errorData = await response.json();
+                    document.getElementById('errorMessage').innerText = errorData.error || 'Failed to fetch students.';
+                }
+            } catch (error) {
+                console.error('Error fetching students:', error);
+                document.getElementById('errorMessage').innerText = 'An error occurred. Please try again.';
+            }
+        }
+
+		async function fetchLabs(labCode) {
+		    try {
+		        const token = localStorage.getItem('token');
+		        
+		        let url = "";
+
+		        // Use the labCode if available, otherwise fetch active labs
+		        if (labCode) {
+		            url = `/api/lab/get/${labCode}`;
+		        } else {
+		            url = '/api/lab/active';
+		        }
+
+		        const response = await fetch(url, {
+		            method: 'GET',
+		            headers: {
+		                'Authorization': 'Bearer ' + token
+		            }
+		        });
+
+		        if (response.ok) {
+		            const data = await response.json();
+		            
+		            let labs = [];
+		            if (Array.isArray(data.activeLabs)) {
+		                labs = data.activeLabs;  // List of labs
+		            } else if (data.activeLabs) {
+		                labs = [data.activeLabs];  // Single lab (wrap in array)
+		            }
+
+		            const labsList = document.getElementById('labs');
+		            const labCodeFromUrl = getLabCodeFromUrl();  // Get labCode from URL
+
+		            // Clear previous labs before adding new ones
+		            labsList.innerHTML = '';
+
+		            // If labCode is provided, disable the checkbox for the matching lab
+		            labs.forEach(lab => {
+		                const li = document.createElement('li');
+		                li.classList.add('list-group-item');
+		                li.innerHTML = ` 
+		                    <span class="lab-name">${lab.labName} (${lab.labCode})</span>
+		                    <div class="checkbox-wrapper">
+		                        <input type="checkbox" value="${lab.labCode}" class="lab-checkbox" 
+		                            ${labCodeFromUrl && lab.labCode === labCodeFromUrl ? 'disabled' : ''}>
+		                    </div>
+		                `;
+		                labsList.appendChild(li);
+		            });
+
+		            document.getElementById('labsSection').style.display = 'block';
+		        } else {
+		            const errorData = await response.json();
+		            document.getElementById('errorMessage').innerText = errorData.error || 'Failed to fetch labs.';
+		        }
+		    } catch (error) {
+		        console.error('Error fetching labs:', error);
+		        document.getElementById('errorMessage').innerText = 'An error occurred. Please try again.';
+		    }
+		}
+
+
+
+		async function saveEnrollment(selectedStudents, selectedLabs) {
+		    try {
+		        const token = localStorage.getItem('token');
+		        const response = await fetch('/api/lab/enroll', {
+		            method: 'POST',
+		            headers: {
+		                'Authorization': 'Bearer ' + token,
+		                'Content-Type': 'application/json'
+		            },
+		            body: JSON.stringify({
+		                rollNos: selectedStudents,
+		                labCodes: selectedLabs
+		            })
+		        });
+
+		        if (response.ok) {
+		            const result = await response.json();
+		            alert('Enrollment successful for selected students and labs!');
+		            console.log('Result:', result); // Debugging
+		            window.location.href = '/api/auth/dashboard'; // Redirect to dashboard
+		        } else {
+		            const errorData = await response.json();
+		            document.getElementById('errorMessage').innerText = errorData.error || 'Enrollment failed.';
+		        }
+		    } catch (error) {
+		        console.error('Error saving enrollment:', error);
+		        document.getElementById('errorMessage').innerText = 'An unexpected error occurred. Please try again.';
+		    }
+		}
+
+
+        // Trigger save when button is clicked
+        document.getElementById('saveButton').addEventListener('click', function() {
+            const selectedStudents = [];
+            const selectedLabs = [];
+
+            // Get selected students
+            document.querySelectorAll('.student-checkbox:checked').forEach(checkbox => {
+                selectedStudents.push(checkbox.value);
+            });
+
+            // Get selected labs
+            document.querySelectorAll('.lab-checkbox:checked').forEach(checkbox => {
+                selectedLabs.push(checkbox.value);
+            });
+
+            if (selectedStudents.length === 0 || selectedLabs.length === 0) {
+                document.getElementById('errorMessage').innerText = 'Please select at least one student and one lab.';
+            } else {
+                saveEnrollment(selectedStudents, selectedLabs);
+            }
+        });
+
+        // Initialize by fetching labs and students
+        const labCode = getLabCodeFromUrl();
+        fetchStudents();
+        fetchLabs(labCode);
+    </script>
+</body>
+</html>

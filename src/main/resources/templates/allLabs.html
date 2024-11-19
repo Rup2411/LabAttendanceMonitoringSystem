@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Total Labs</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+	<script>
+		function fetchLabs(status = 'all') {
+			const url = `/api/lab/all?status=${encodeURIComponent(status)}`;
+			const token = localStorage.getItem('token');
+			fetch(url, {
+				method: 'GET',
+				headers: {
+					'Authorization': 'Bearer ' + token
+				}
+			})
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('Network response was not ok');
+					}
+					return response.json();
+				})
+				.then(data => {
+					const tableBody = document.querySelector('#labsTableBody');
+					tableBody.innerHTML = '';
+					const labs = data.allLabs;
+
+					labs.forEach(lab => {
+						const isActive = lab.active === true || lab.active === 'true';
+						const row = `
+                            <tr class="lab-row">
+                                <td class="text-center">${lab.labCode}</td>
+                                <td class="text-center">${lab.labName}</td>
+                                <td class="text-center">${lab.maxCapacity}</td>
+                                <td class="text-center">${lab.registeredStudents}</td>
+                                <td class="text-left pl-2">${lab.labDescription}</td>
+                                <td class="text-center" style="color: ${isActive ? 'green' : 'red'};">
+                                    ${isActive ? 'Yes' : 'No'}
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-primary" onclick="editLab('${lab.labCode}')">Edit</button>
+                                        <button class="btn btn-sm btn-secondary" onclick="goToCreateSession('${lab.labCode}')">Create Session</button>
+										<button class="btn btn-sm btn-danger" onclick="goToEnrollStudents('${lab.labCode}')">Enroll Students</button>
+                                    </div>
+                                </td>
+                            </tr>`;
+						tableBody.insertAdjacentHTML('beforeend', row);
+					});
+				})
+				.catch(error => console.error('Error fetching labs:', error));
+		}
+
+		function editLab(labCode) {
+			window.location.href = `/api/web/editLab?labCode=${labCode}`;
+		}
+
+		function goToCreateSession(labCode) {
+			window.location.href = `/api/web/createLabSession?labCode=${labCode}`;
+		}
+		
+		function goToEnrollStudents(labCode) {
+			window.location.href = `/api/web/enrollStudents?labCode=${labCode}`;
+		}
+		
+		function applyFilter(status) {
+			fetchLabs(status);
+		}
+
+		window.onload = function() {
+			fetchLabs('all');
+		}
+	</script>
+</head>
+
+<body>
+	<div class="container">
+		<h1 class="mt-5 mb-3 text-center">Total Labs</h1>
+
+		<div class="row">
+			<!-- Left side: Filter Dropdown -->
+			<div class="col-md-3 mb-3">
+				<div class="dropdown">
+					<button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="filterDropdown"
+						data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						<i class="bi bi-funnel-fill"></i> Filter by Status
+					</button>
+					<div class="dropdown-menu" aria-labelledby="filterDropdown">
+						<a class="dropdown-item" href="#" onclick="applyFilter('all')">All</a>
+						<a class="dropdown-item" href="#" onclick="applyFilter('active')">Active</a>
+						<a class="dropdown-item" href="#" onclick="applyFilter('inactive')">Inactive</a>
+					</div>
+				</div>
+			</div>
+
+			<!-- Right side: Create Lab button -->
+			<div class="col-md-9 mb-3 d-flex justify-content-end">
+				<a th:href="@{/api/web/createLab}" class="btn btn-sm btn-outline-primary" style="margin-right:10px">Create Lab</a>
+			</div>
+		</div>
+
+		<!-- Labs Table -->
+		<div class="card">
+			<div class="card-body">
+				<table class="table table-bordered table-striped">
+					<thead class="thead-dark">
+						<tr>
+							<th scope="col" class="text-center">Lab Code</th>
+							<th scope="col" class="text-center">Lab Name</th>
+							<th scope="col" class="text-center">Max Capacity</th>
+							<th scope="col" class="text-center">Registered Students</th>
+							<th scope="col" class="text-left">Description</th>
+							<th scope="col" class="text-center">Active</th>
+							<th scope="col" class="text-center">Actions</th>
+						</tr>
+					</thead>
+					<tbody id="labsTableBody">
+						<!-- Dynamic rows will be injected here -->
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<!-- Bootstrap JS for dropdown -->
+	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

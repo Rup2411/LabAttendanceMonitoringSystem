@@ -30,4 +30,6 @@ public class LabSessionDto {
 	private String sessionLocation;
 	
 	private String sessionType;
+	
+	private boolean sessionStatus;
 }

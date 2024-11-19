@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Lab</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            font-weight: bold;
+        }
+        .form-control {
+            height: calc(1.5em + 0.75rem + 2px);
+            padding: 5px 10px;
+        }
+        button {
+            width: 100%;
+            margin-top: 15px;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Edit Lab Session</h1>
+        <form id="editSessionForm">
+            <div class="form-group">
+                <label for="labSessionId">Lab Session Id:</label>
+                <input disabled type="text" class="form-control" id="labSessionId" name="labSessionId" required>
+            </div>
+            <div class="form-group">
+                <label for="labCode">Lab Code:</label>
+                <input disabled type="text" class="form-control" id="labCode" name="labCode" required>
+            </div>
+            <div class="form-group">
+                <label for="sessionLocation">Session Location:</label>
+                <input type="text" class="form-control" id="sessionLocation" name="sessionLocation" required>
+            </div>
+            <div class="form-group">
+                <label for="sessionDate">Session Date:</label>
+                <input type="date" class="form-control" id="sessionDate" name="sessionDate" required>
+            </div>
+            <div class="form-group">
+                <label for="startTime">Start Time:</label>
+                <input type="time" class="form-control" id="startTime" name="startTime" required>
+            </div>
+            <div class="form-group">
+                <label for="endTime">End Time:</label>
+                <input type="time" class="form-control" id="endTime" name="endTime" required>
+            </div>
+            <div class="form-group">
+                <label for="sessionType">Session Type:</label>
+                <select class="form-control" id="sessionType" name="sessionType" required>
+                    <option value="PRACTICAL">Practical</option>
+                    <option value="TUTORIAL">Tutorial</option>
+                    <option value="WORKSHOP">Workshop</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="instructorName">Instructor Name:</label>
+                <input type="text" class="form-control" id="instructorName" name="instructorName" required>
+            </div>
+            <div class="form-group">
+                <label for="instructorMobileNo">Instructor Mobile No:</label>
+                <input type="text" class="form-control" id="instructorMobileNo" name="instructorMobileNo" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Session</button>
+        </form>
+    </div>
+    
+	<script>
+	        function getSessionCodeFromUrl() {
+	            const urlParams = new URLSearchParams(window.location.search);
+	            return urlParams.get('labSessionId');
+	        }
+
+	        async function loadLabSessionData(labSessionId) {
+	            try {
+	                const token = localStorage.getItem('token');
+
+	                const response = await fetch(`/api/session/get/${labSessionId}`, {
+	                    method: 'GET',
+	                    headers: {
+	                        'Authorization': 'Bearer ' + token
+	                    }
+	                });
+	                if (response.ok) {
+	                    const data = await response.json();
+						console.log(data)
+	                    const sessionData = data.session;
+						console.log(sessionData);
+						document.getElementById('labSessionId').value = sessionData.labSessionId || '';
+						document.getElementById('labCode').value = sessionData.labCode || '';
+						document.getElementById('sessionLocation').value = sessionData.sessionLocation || '';
+						document.getElementById('sessionDate').value = sessionData.labSessionDate || '';
+						document.getElementById('startTime').value = convertTo24HourFormat(sessionData.startTime) || '';
+			            document.getElementById('endTime').value = convertTo24HourFormat(sessionData.endTime) || '';
+						document.getElementById('sessionType').value = sessionData.sessionType || '';
+						document.getElementById('instructorName').value = sessionData.instructorName || '';
+						document.getElementById('instructorMobileNo').value = sessionData.instructorMobileNo || '';
+	                    
+	                } else {
+	                    document.getElementById('errorMessage').innerText = 'Failed to load Session data.';
+	                }
+	            } catch (error) {
+	                console.error('Error loading Session data:', error);
+	                document.getElementById('errorMessage').innerText = 'Error loading session data.';
+	            }
+	        }
+
+	        document.getElementById('editSessionForm').onsubmit = async function(event) {
+	            event.preventDefault();
+
+	            const sessionData = {
+					labSessionId : document.getElementById('labSessionId').value,
+					labCode : document.getElementById('labCode').value,
+					sessionLocation : document.getElementById('sessionLocation').value,
+					labSessionDate : document.getElementById('sessionDate').value,
+					startTime : formatTime(document.getElementById('startTime').value),
+					endTime : formatTime(document.getElementById('endTime').value),
+					sessionType : document.getElementById('sessionType').value,
+					instructorName : document.getElementById('instructorName').value,
+					instructorMobileNo : document.getElementById('instructorMobileNo').value
+	            };
+
+	            const labSessionId = getSessionCodeFromUrl();
+
+	            try {
+	                const token = localStorage.getItem('token');
+	                const response = await fetch(`/api/session/update/${labSessionId}`, {
+	                    method: 'PUT',
+	                    headers: {
+	                        'Authorization': 'Bearer ' + token,
+	                        'Content-Type': 'application/json'
+	                    },
+	                    body: JSON.stringify(sessionData)
+	                });
+
+	                if (response.ok) {
+	                    window.location.href = '/api/web/sessions';
+	                } else {
+	                    const errorData = await response.json();
+	                    document.getElementById('errorMessage').innerText = errorData.error || 'Failed to update lab.';
+	                }
+	            } catch (error) {
+	                console.error('Error submitting edit form:', error);
+	                document.getElementById('errorMessage').innerText = 'An error occurred. Please try again.';
+	            }
+	        };
+
+	        window.onload = function() {
+	            const sessionCode = getSessionCodeFromUrl();
+	            if (sessionCode) {
+	                loadLabSessionData(sessionCode);
+	            } else {
+	                document.getElementById('errorMessage').innerText = 'Session Id is missing.';
+	            }
+	        };
+			
+			function formatTime(timeString) {
+			            const [hour, minute] = timeString.split(':');
+			            const hours = parseInt(hour, 10);
+			            const ampm = hours >= 12 ? 'PM' : 'AM';
+			            const formattedHour = hours % 12 || 12;
+			            return `${String(formattedHour).padStart(2, '0')}:${minute} ${ampm}`;
+			        }
+					
+					function convertTo24HourFormat(timeStr) {
+					    const [time, modifier] = timeStr.split(' ');
+					    let [hours, minutes] = time.split(':').map(num => parseInt(num, 10));
+
+					    if (modifier.toUpperCase() === 'PM' && hours < 12) {
+					        hours += 12;
+					    } else if (modifier.toUpperCase() === 'AM' && hours === 12) {
+					        hours = 0;
+					    }
+
+					    hours = String(hours).padStart(2, '0');
+					    minutes = String(minutes).padStart(2, '0');
+
+					    return `${hours}:${minutes}`;
+					}
+	    </script>
+</body>
+</html>

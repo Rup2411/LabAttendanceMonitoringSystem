@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Lab Session</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .form-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #343a40;
+        }
+        .form-group label {
+            font-weight: bold;
+        }
+        .btn-primary {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h1>Create Lab Session</h1>
+            <form id="createSessionForm" th:action="@{/api/session/create}" method="POST">
+                <div class="form-group">
+                    <label for="labCode">Lab Code:</label>
+                    <input type="text" class="form-control" id="labCode" name="labCode" th:value="${labCode}" required>
+                </div>
+                <div class="form-group">
+                    <label for="sessionLocation">Session Location:</label>
+                    <input type="text" class="form-control" id="sessionLocation" name="sessionLocation" required>
+                </div>
+                <div class="form-group">
+                    <label for="sessionDate">Session Date:</label>
+                    <input type="date" class="form-control" id="sessionDate" name="sessionDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="startTime">Start Time:</label>
+                    <input type="time" class="form-control" id="startTime" name="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="endTime">End Time:</label>
+                    <input type="time" class="form-control" id="endTime" name="endTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="sessionType">Session Type:</label>
+                    <select class="form-control" id="sessionType" name="sessionType" required>
+                        <option value="PRACTICAL">Practical</option>
+                        <option value="TUTORIAL">Tutorial</option>
+                        <option value="WORKSHOP">Workshop</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="instructorName">Instructor Name:</label>
+                    <input type="text" class="form-control" id="instructorName" name="instructorName" required>
+                </div>
+                <div class="form-group">
+                    <label for="instructorMobileNo">Instructor Mobile No:</label>
+                    <input type="text" class="form-control" id="instructorMobileNo" name="instructorMobileNo" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Session</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Retrieve labCode from the URL if available and set it in the input field
+        const urlParams = new URLSearchParams(window.location.search);
+        const labCodeParam = urlParams.get('labCode');
+        if (labCodeParam) {
+            document.getElementById('labCode').value = labCodeParam;
+        }
+
+        // Format time to 12-hour format with AM/PM
+        function formatTime(timeString) {
+            const [hour, minute] = timeString.split(':');
+            const hours = parseInt(hour, 10);
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const formattedHour = hours % 12 || 12;
+            return `${String(formattedHour).padStart(2, '0')}:${minute} ${ampm}`;
+        }
+    </script>
+</body>
+</html>

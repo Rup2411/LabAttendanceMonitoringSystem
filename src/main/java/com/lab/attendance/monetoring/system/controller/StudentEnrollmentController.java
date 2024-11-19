@@ -34,7 +34,7 @@ public class StudentEnrollmentController {
 			HttpServletRequest request) {
 
 		try {
-			List<Map<String, Map<String, String>>> result = enrollmentService.enrollStudentsinLab(dto.getRollNo(),
+			List<Map<String, Map<String, String>>> result = enrollmentService.enrollStudentsinLab(dto.getRollNos(),
 					dto.getLabCodes(), request);
 
 			return new ResponseEntity<>(result, HttpStatus.OK);
@@ -50,9 +50,12 @@ public class StudentEnrollmentController {
 	public ResponseEntity<?> getAllUsersEnrolledInLab(@PathVariable String labCode, HttpServletRequest request) {
 
 		try {
+			Map<String, List<LabEnrollmentResponseDto>> map = new HashMap<>();
 			List<LabEnrollmentResponseDto> dtos = enrollmentService.getStudentsEnrolledInLabs(labCode, request);
+			
+			map.put("students", dtos);
 
-			return new ResponseEntity<>(dtos, HttpStatus.OK);
+			return new ResponseEntity<>(map, HttpStatus.OK);
 		} catch (CustomException e) {
 
 			Map<String, String> errorResponse = new HashMap<>();

@@ -12,6 +12,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,8 +31,8 @@ import com.lab.attendance.monetoring.system.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-@RestController
-@RequestMapping("/api/auth")
+@Controller
+@RequestMapping("/")
 public class AuthController {
 
 	@Autowired
@@ -44,8 +46,31 @@ public class AuthController {
 
 	@Autowired
 	AuthenticationManager authenticationManager;
+	
+	@GetMapping("/")
+	public String redirectToLogin() {
+	    return "redirect:/api/auth/login";
+	}
 
-	@PostMapping("/register")
+	
+	@GetMapping("/api/auth/login")
+    public String loginPage() {
+        return "login"; // This will resolve to src/main/resources/templates/login.html
+    }
+	
+	@GetMapping("/api/auth/register")
+    public String registerPage() {
+        return "register"; // This will resolve to src/main/resources/templates/login.html
+    }
+
+    // Serve the dashboard page
+    @GetMapping("/api/auth/dashboard")
+    public String dashboard() {
+        return "dashboard"; // This will resolve to src/main/resources/templates/dashboard.html
+    }
+    
+
+	@PostMapping("/api/auth/register")
 	public ResponseEntity<?> registerUser(@ModelAttribute UserDto dto,
 			@RequestParam(required = false) MultipartFile image, HttpServletRequest request) {
 
@@ -75,7 +100,7 @@ public class AuthController {
 		}
 	}
 
-	@PostMapping("/login")
+	@PostMapping("/api/auth/login")
 	public ResponseEntity<?> login(@RequestBody JwtRequestDto dto) {
 		this.doAuthenticate(dto.getEmail(), dto.getPassword());
 

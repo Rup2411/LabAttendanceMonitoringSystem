@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Dashboard</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			background-color: #f7f9fc;
+			overflow-x: hidden;
+		}
+
+		.sidebar {
+			height: 100vh;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 220px;
+			background-color: #343a40;
+			padding-top: 20px;
+			transition: transform 0.3s ease;
+			transform: translateX(0);
+			z-index: 1000;
+		}
+
+		.sidebar.collapsed {
+			transform: translateX(-220px);
+		}
+
+		.sidebar h3 {
+			color: #f8f9fa;
+			text-align: center;
+			margin-bottom: 20px;
+		}
+
+		.sidebar a {
+			color: #f8f9fa;
+			text-decoration: none;
+			display: block;
+			padding: 15px 20px;
+			font-size: 18px;
+			transition: background-color 0.3s;
+		}
+
+		.sidebar a:hover {
+			background-color: #495057;
+		}
+
+		.content {
+			padding: 20px;
+			margin-left: 220px;
+			transition: margin-left 0.3s ease;
+		}
+
+		.content.shifted {
+			margin-left: 0;
+		}
+
+		.header {
+			background-color: #007bff;
+			color: white;
+			padding: 20px;
+			margin-bottom: 20px;
+			text-align: center;
+			border-radius: 5px;
+		}
+
+		.toggle-btn {
+			position: fixed;
+			top: 20px;
+			left: 230px;
+			background-color: #007bff;
+			border: 2px solid black;
+			/* Black border */
+			color: white;
+			padding: 10px;
+			cursor: pointer;
+			font-size: 18px;
+			border-radius: 5px;
+			z-index: 1001;
+			transition: left 0.3s ease;
+		}
+
+		.toggle-btn.collapsed {
+			left: 10px;
+		}
+
+		.card {
+			margin-top: 20px;
+			border-radius: 8px;
+			text-align: center;
+		}
+
+		.card-body {
+			padding: 20px;
+		}
+
+		.card a {
+			font-weight: bold;
+		}
+
+		/* Responsive adjustments */
+		@media (max-width: 768px) {
+			.sidebar {
+				transform: translateX(-220px);
+			}
+
+			.sidebar.collapsed {
+				transform: translateX(0);
+			}
+
+			.content {
+				margin-left: 0;
+			}
+
+			.toggle-btn {
+				left: 10px;
+			}
+		}
+
+		/* Hover effect on cards */
+		.card:hover {
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+			transform: translateY(-5px);
+			transition: transform 0.3s, box-shadow 0.3s;
+		}
+
+		.card .btn-light {
+			background-color: #ffffff;
+			color: #007bff;
+			font-weight: bold;
+			border: none;
+			border-radius: 5px;
+			transition: background-color 0.3s, color 0.3s;
+		}
+
+		.card .btn-light:hover {
+			background-color: #007bff;
+			color: #ffffff;
+		}
+	</style>
+</head>
+
+<body>
+
+	<!-- Sidebar -->
+	<div class="sidebar" id="sidebar">
+		<h3>Dashboard</h3>
+		<a href="#profile">Profile</a>
+		<a href="#attendance">Attendance</a>
+		<a href="#settings">Settings</a>
+		<a href="#" onclick="logout()">Logout</a>
+	</div>
+
+	<!-- Toggle Button -->
+	<button class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()">☰</button>
+
+	<!-- Main Content -->
+	<div class="content" id="content">
+		<div class="header">
+			<h2>Welcome to the Dashboard!</h2>
+			<p>This is a protected page that requires authentication.</p>
+		</div>
+
+		<div class="container">
+			<div class="row">
+				<div class="col-md-6 col-lg-4">
+					<div class="card text-white bg-primary">
+						<div class="card-body">
+							<h5 class="card-title">Enrollment</h5>
+							<p class="card-text">Enroll Students In Labs</p>
+							<a th:href="@{/api/web/enrollStudents}" class="btn btn-light">Enroll</a>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-6 col-lg-4">
+					<div class="card text-white bg-success">
+						<div class="card-body">
+							<h5 class="card-title">Create Lab Session</h5>
+							<p class="card-text">Create Lab Sessions For Particular Labs</p>
+							<a th:href="@{/api/web/createLabSession}" class="btn btn-light">Create Lab Session</a>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-6 col-lg-4">
+					<div class="card text-white bg-warning">
+						<div class="card-body">
+							<h5 class="card-title">Total Labs</h5>
+							<p class="card-text">View All Labs</p>
+							<a th:href="@{/api/web/labs}" class="btn btn-light">All Labs</a>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-6 col-lg-4">
+					<div class="card text-white bg-info">
+						<div class="card-body">
+							<h5 class="card-title">Register Student</h5>
+							<p class="card-text">Register a Student to Enroll in Lab</p>
+							<a href="/api/auth/register" class="btn btn-light">Register Student</a>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-6 col-lg-4">
+					<div class="card bg-danger text-white">
+						<div class="card-body">
+							<h5 class="card-title">View Lab Sessions</h5>
+							<p class="card-text">View All Lab Sessions</p>
+							<a th:href="@{/api/web/sessions}" class="btn btn-light">Lab Sessions</a>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-6 col-lg-4">
+					<div class="card text-white bg-primary">
+						<div class="card-body">
+							<h5 class="card-title">Mark Attendance</h5>
+							<p class="card-text">Attendance</p>
+							<a th:href="@{/api/web/attendance}" class="btn btn-light">Mark</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		function getToken() {
+			return localStorage.getItem('token');
+		}
+
+		function logout() {
+			localStorage.removeItem('token');
+			window.location.href = '/api/auth/login';
+		}
+
+		function toggleSidebar() {
+			const sidebar = document.getElementById('sidebar');
+			const content = document.getElementById('content');
+			const toggleBtn = document.getElementById('toggleBtn');
+			sidebar.classList.toggle('collapsed');
+			content.classList.toggle('shifted');
+			toggleBtn.classList.toggle('collapsed');
+		}
+	</script>
+</body>
+
+</html>

@@ -53,72 +53,74 @@ public class StudentEnrollmentServiceImpl implements StudentEnrollmentService {
 	EmailService emailService;
 
 	@Override
-	public List<Map<String, Map<String, String>>> enrollStudentsinLab(String rollNo, Set<String> labCodes,
+	public List<Map<String, Map<String, String>>> enrollStudentsinLab(Set<String> rollNos, Set<String> labCodes,
 			HttpServletRequest request) {
 
 		Map<String, String> enrolledLabs = new HashMap<>();
 
 		Map<String, String> nonEnrolledLabs = new HashMap<>();
+		
+		List<String> successfullyEnrolledLabs = new ArrayList<>();
 
 		String role = jwtTokenHelper.getRoleFromToken(request);
 		String requestRollNo = jwtTokenHelper.getRollNoFromToken(request);
 
-		if (role.equals("STUDENT") && !requestRollNo.equals(rollNo)) {
+		if (role.equals("STUDENT") && !rollNos.contains(requestRollNo)) {
 			throw new CustomException("Students can only enroll themselves.");
 		}
-
-		UserEntity entity = userRepo.findByRollNo(rollNo)
-				.orElseThrow(() -> new CustomException("Student Not Found For Roll No: " + rollNo));
 		
-		List<String> successfullyEnrolledLabs = new ArrayList<>();
+		for(String rollNo : rollNos) {
+			UserEntity entity = userRepo.findByRollNo(rollNo)
+					.orElseThrow(() -> new CustomException("Student Not Found For Roll No: " + rollNo));
+			
 
-		for (String labCode : labCodes) {
+			for (String labCode : labCodes) {
 
-			try {
-				LabEntity labEntity = labRepo.findByLabCode(labCode)
-						.orElseThrow(() -> new CustomException("Lab Not Found For Lab Code: " + labCode));
+				try {
+					LabEntity labEntity = labRepo.findByLabCode(labCode)
+							.orElseThrow(() -> new CustomException("Lab Not Found For Lab Code: " + labCode));
 
-				if (!entity.getEnrolledLabCodes().contains(labCode)) {
+					if (!entity.getEnrolledLabCodes().contains(labCode)) {
 
-					entity.getEnrolledLabCodes().add(labCode);
+						entity.getEnrolledLabCodes().add(labCode);
 
-					enrolledLabs.put(labCode, "Enrolled");
+						enrolledLabs.put(labCode, "Enrolled");
+						
+						successfullyEnrolledLabs.add(labCode);
+					} else {
+
+						nonEnrolledLabs.put(labCode, "Already Enrolled");
+					}
 					
-					successfullyEnrolledLabs.add(labCode);
-				} else {
+					if(labEntity.getMaxCapacity() == labEntity.getRegisteredStudents()) {
+						throw new CustomException("Lab Is Full Kindly Contact Lab Admin");
+					}
 
-					nonEnrolledLabs.put(labCode, "Already Enrolled");
+					if (!labEntity.getEnrolledStudentsRollNo().contains(rollNo)) {
+
+						labEntity.getEnrolledStudentsRollNo().add(rollNo);
+
+						labEntity.setRegisteredStudents(labEntity.getRegisteredStudents() + 1);
+					}
+
+					userRepo.save(entity);
+
+					labRepo.save(labEntity);
+				} catch (CustomException e) {
+					nonEnrolledLabs.put(labCode, e.getMessage());
 				}
-				
-				if(labEntity.getMaxCapacity() == labEntity.getRegisteredStudents()) {
-					throw new CustomException("Lab Is Full Kindly Contact Lab Admin");
-				}
-
-				if (!labEntity.getEnrolledStudentsRollNo().contains(rollNo)) {
-
-					labEntity.getEnrolledStudentsRollNo().add(rollNo);
-
-					labEntity.setRegisteredStudents(labEntity.getRegisteredStudents() + 1);
-				}
-
-				userRepo.save(entity);
-
-				labRepo.save(labEntity);
-			} catch (CustomException e) {
-				nonEnrolledLabs.put(labCode, e.getMessage());
 			}
-		}
-		
-		if (!successfullyEnrolledLabs.isEmpty()) {
-	        String subject = "Lab Enrollment Confirmation";
-	        String body = "Dear " + entity.getName() + ",\n\n" +
-	                      "You have been successfully enrolled in the following lab(s):\n\n" +
-	                      String.join(", ", successfullyEnrolledLabs) + "\n\n" +
-	                      "Best regards,\n" +
-	                      "BBIT Lab Team";
+			if (!successfullyEnrolledLabs.isEmpty()) {
+		        String subject = "Lab Enrollment Confirmation";
+		        String body = "Dear " + entity.getName() + ",\n\n" +
+		                      "You have been successfully enrolled in the following lab(s):\n\n" +
+		                      String.join(", ", successfullyEnrolledLabs) + "\n\n" +
+		                      "Best regards,\n" +
+		                      "BBIT Lab Team";
 
-	        emailService.sendEmail(List.of(entity.getEmail()), subject, body);
-	    }
+		        emailService.sendEmail(List.of(entity.getEmail()), subject, body);
+		    }
+		}		
 
 		List<Map<String, Map<String, String>>> result = new ArrayList<>();
 		Map<String, Map<String, String>> enrolledMap = new HashMap<>();

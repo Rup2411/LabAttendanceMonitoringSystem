@@ -11,11 +11,11 @@ import jakarta.servlet.http.HttpServletRequest;
 
 public interface StudentEnrollmentService {
 
-	List<Map<String, Map<String, String>>> enrollStudentsinLab(String rollNo, Set<String> labCodes,
-			HttpServletRequest request);
-
 	UserEnrollmentResponseDto getAllLabsEnrolledByStudent(String rollNo);
 
 	List<LabEnrollmentResponseDto> getStudentsEnrolledInLabs(String labCode, HttpServletRequest request);
+
+	List<Map<String, Map<String, String>>> enrollStudentsinLab(Set<String> rollNo, Set<String> labCodes,
+			HttpServletRequest request);
 
 }

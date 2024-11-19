@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Total Labs</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+	<script>
+
+		function fetchLabs() {
+			// Dynamically build the URL based on the status
+			//const url = `/api/session/all?status=${encodeURIComponent(status)}`;
+			const url = `/api/session/all`;
+			const token = localStorage.getItem('token');
+			fetch(url, {
+				method: 'GET',
+				headers: {
+					'Authorization': 'Bearer ' + token
+				}
+			})
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('Network response was not ok');
+					}
+					return response.json();
+				})
+				.then(data => {
+					const tableBody = document.querySelector('#labsTableBody');
+					tableBody.innerHTML = '';
+					const sessions = data.allLabSessions;
+
+					sessions.forEach(session => {
+						const isActive = session.active === true || session.active === 'true';
+						const row = `
+                            <tr>
+                                <td class="text-center">${session.labSessionId}</td>
+                                <td class="text-center">${session.labCode}</td>
+                                <td class="text-center">${session.labSessionDate}</td>
+                                <td class="text-center">${session.startTime}</td>
+								<td class="text-center">${session.endTime}</td>
+								<td class="text-center">${session.labDuration}</td>
+								<td class="text-center">${session.sessionLocation}</td>
+								<td class="text-center">${session.sessionType}</td>
+								<td class="text-center">${session.instructorName}</td>
+								<td class="text-center">${session.instructorMobileNo}</td>
+                                
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-primary" onclick="editLabSession('${session.labSessionId}')">Edit</button>
+                                        <button class="btn btn-sm btn-secondary" onclick="goToMarkAttendance('${session.labSessionId}')">Create Session</button>
+                                    </div>
+                                </td>
+                            </tr>`;
+						tableBody.insertAdjacentHTML('beforeend', row);
+					});
+				})
+				.catch(error => console.error('Error fetching labs:', error));
+		}
+
+		function editLabSession(labSessionId) {
+			window.location.href = `/api/web/editSession?labSessionId=${labSessionId}`;
+		}
+
+		function goToMarkAttendance(labCode) {
+			window.location.href = `/api/web/markAttendance?labCode=${labCode}`;
+		}
+		
+		function applyFilter(status) {
+			console.log("Status received:", status);
+		//	fetchLabs(status);
+		}
+
+		window.onload = function() {
+			fetchLabs('all');
+		}
+
+	</script>
+</head>
+
+<body>
+	<div class="container">
+		<h1 class="mt-5 mb-3 text-center">Total Lab Sessions</h1>
+
+		<div class="row">
+			<!-- Left side: Filter Dropdown -->
+			<div class="col-md-3 mb-3">
+				<div class="dropdown">
+					<button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="filterDropdown"
+						data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						<i class="bi bi-funnel-fill"></i> Filter
+					</button>
+					<div class="dropdown-menu" aria-labelledby="filterDropdown">
+						<a class="dropdown-item" href="#" onclick="applyFilter('all')">All</a>
+						<a class="dropdown-item" href="#" onclick="applyFilter('active')">Active</a>
+						<a class="dropdown-item" href="#" onclick="applyFilter('inactive')">Inactive</a>
+					</div>
+				</div>
+			</div>
+
+			<!-- Right side: Create Lab button -->
+			<div class="col-md-9 mb-3 d-flex justify-content-end">
+				<a th:href="@{/api/web/createLab}" class="btn btn-sm btn-outline-primary" style="margin-right:10px">Create Lab</a>
+			</div>
+		</div>
+
+		<table class="table table-bordered table-striped">
+			<thead class="thead-dark">
+				<tr>
+					<th scope="col" class="text-center">Lab Session Id</th>
+					<th scope="col" class="text-center">Lab Code</th>
+					<th scope="col" class="text-center">Session Date</th>
+					<th scope="col" class="text-center">Start Time</th>
+					<th scope="col" class="text-left">End Time</th>
+					<th scope="col" class="text-center">Duration</th>
+					<th scope="col" class="text-center">Session Location</th>
+					<th scope="col" class="text-center">Session Type</th>
+					<th scope="col" class="text-center">Instructor Name</th>
+					<th scope="col" class="text-center">Instructor Mobile No</th>
+					<th scope="col" class="text-center">Actions</th>
+				</tr>
+			</thead>
+			<tbody id="labsTableBody">
+			</tbody>
+		</table>
+	</div>
+
+	<!-- Include necessary JS for Bootstrap dropdown -->
+	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

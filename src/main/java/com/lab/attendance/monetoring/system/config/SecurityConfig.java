@@ -44,7 +44,7 @@ public class SecurityConfig {
 					headers.frameOptions(frameOptions -> frameOptions.sameOrigin());
 				})
 				.authorizeHttpRequests(
-						requests -> requests.requestMatchers("/api/auth/**").permitAll().anyRequest().authenticated())
+						requests -> requests.requestMatchers("/", "/api/auth/**", "/api/web/**").permitAll().anyRequest().authenticated())
 				.exceptionHandling(ex -> ex.authenticationEntryPoint(point))
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 		http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
