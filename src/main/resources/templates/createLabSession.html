@@ -34,10 +34,10 @@
     <div class="container">
         <div class="form-container">
             <h1>Create Lab Session</h1>
-            <form id="createSessionForm" th:action="@{/api/session/create}" method="POST">
+            <form id="createSessionForm">
                 <div class="form-group">
                     <label for="labCode">Lab Code:</label>
-                    <input type="text" class="form-control" id="labCode" name="labCode" th:value="${labCode}" required>
+                    <input type="text" class="form-control" id="labCode" name="labCode" required>
                 </div>
                 <div class="form-group">
                     <label for="sessionLocation">Session Location:</label>
@@ -83,6 +83,41 @@
         if (labCodeParam) {
             document.getElementById('labCode').value = labCodeParam;
         }
+
+        // Handle form submission
+        document.getElementById('createSessionForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const sessionData = {
+                labCode: document.getElementById('labCode').value,
+                sessionLocation: document.getElementById('sessionLocation').value,
+                labSessionDate: document.getElementById('sessionDate').value,
+                startTime: formatTime(document.getElementById('startTime').value),
+                endTime: formatTime(document.getElementById('endTime').value),
+                sessionType: document.getElementById('sessionType').value,
+                instructorName: document.getElementById('instructorName').value,
+                instructorMobileNo: document.getElementById('instructorMobileNo').value
+            };
+
+            fetch('/api/session/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
+                body: JSON.stringify(sessionData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert('Session created successfully!');
+                    window.location.href = '/api/web/labs';
+                }
+            })
+            .catch(error => console.error('Error creating session:', error));
+        });
 
         // Format time to 12-hour format with AM/PM
         function formatTime(timeString) {
