@@ -26,7 +26,7 @@ public interface LabRepo extends JpaRepository<LabEntity, Long> {
 	@Query(value = "select * from lab_entity order by is_active desc", nativeQuery = true)
 	List<LabEntity> findAllOrderByStatus();
 
-	@Query(value = "select u.* FROM lab_entity u WHERE u.lab_code IN :x AND is_active = true", nativeQuery = true)
+	@Query(value = "select u.* FROM lab_entity u WHERE u.lab_code IN (?1) AND is_active = true", nativeQuery = true)
 	List<LabEntity> findByLabIn(@Param("x") Set<String> enrolledLabCodes);
 
 	@Query(value = "select * from lab_entity where lab_code = :x AND is_active = true", nativeQuery = true)

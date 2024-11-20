@@ -33,7 +33,7 @@ public interface UserRepo extends JpaRepository<UserEntity, Long> {
 	@Query(value = "select * from user_entity where roll_no = :x", nativeQuery = true)
 	Optional<UserEntity> findByRollNo(@Param("x") String rollNo);
 
-	@Query(value = "SELECT u.* FROM user_entity u WHERE u.roll_no IN :x", nativeQuery = true)
+	@Query(value = "SELECT u.* FROM user_entity u WHERE u.roll_no IN (?1)", nativeQuery = true)
 	List<UserEntity> findByRollNoIn(@Param("x") Set<String> enrolledStudentEmails);
 	
 	@Query(value = "SELECT parent_email from user_entity where email = :x", nativeQuery = true)
