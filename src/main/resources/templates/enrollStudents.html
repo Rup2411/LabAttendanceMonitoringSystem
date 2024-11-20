@@ -212,7 +212,7 @@
 		                    <span class="lab-name">${lab.labName} (${lab.labCode})</span>
 		                    <div class="checkbox-wrapper">
 		                        <input type="checkbox" value="${lab.labCode}" class="lab-checkbox" 
-		                            ${labCodeFromUrl && lab.labCode === labCodeFromUrl ? 'disabled' : ''}>
+		                            ${labCodeFromUrl && lab.labCode === labCodeFromUrl ? 'disabled checked' : ''}>
 		                    </div>
 		                `;
 		                labsList.appendChild(li);

@@ -15,4 +15,6 @@ public interface LabSessionService {
 	List<LabSessionDto> getAllLabSessions(HttpServletRequest request);
 
 	LabSessionDto updateSession(String labSessionId, LabSessionDto dto, HttpServletRequest request);
+
+	List<LabSessionDto> findAllSessionByLabCode(String labCode, HttpServletRequest request);
 }

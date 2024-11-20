@@ -354,6 +354,14 @@ public class LabSessionServiceImpl implements LabSessionService {
 	}
 	
 	@Override
+	public List<LabSessionDto> findAllSessionByLabCode(String labCode, HttpServletRequest request){
+		
+		List<LabSessionEntity> allSessions = labSessionRepo.findAllByLabCode(labCode);
+		
+		return allSessions.stream().map(this::toDto).collect(Collectors.toList());
+	}
+	
+	@Override
 	public List<LabSessionDto> getAllLabSessions(HttpServletRequest request){
 		
 		List<LabSessionEntity> entity = labSessionRepo.findAllOrderByStatus();

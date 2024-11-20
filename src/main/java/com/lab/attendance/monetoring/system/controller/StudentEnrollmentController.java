@@ -53,7 +53,7 @@ public class StudentEnrollmentController {
 			Map<String, List<LabEnrollmentResponseDto>> map = new HashMap<>();
 			List<LabEnrollmentResponseDto> dtos = enrollmentService.getStudentsEnrolledInLabs(labCode, request);
 			
-			map.put("students", dtos);
+			map.put("studentData", dtos);
 
 			return new ResponseEntity<>(map, HttpStatus.OK);
 		} catch (CustomException e) {

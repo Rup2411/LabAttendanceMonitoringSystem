@@ -49,6 +49,25 @@ public class LabSessionController {
 		}
 	}
 	
+	@GetMapping("/lab/{labCode}")
+	public ResponseEntity<?> getSessionByLabCode(@PathVariable String labCode, HttpServletRequest request){
+		
+		Map<String, Object> map = new HashMap<>();
+		
+		try {
+			List<LabSessionDto> sessionDto = labSessionService.findAllSessionByLabCode(labCode, request);
+			
+			map.put("sessions", sessionDto);
+			
+			return new ResponseEntity<>(map, HttpStatus.OK);
+		} catch (CustomException e) {
+			Map<String, String> errorResponse = new HashMap<>();
+	        errorResponse.put("error", e.getMessage());
+	        
+	        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+		}
+	}
+	
 	@GetMapping("/all")
 	public ResponseEntity<?> getAllLabs(@RequestParam(required = false, defaultValue = "all") String status, HttpServletRequest request){
 		

@@ -31,7 +31,7 @@ public interface LabSessionRepo extends JpaRepository<LabSessionEntity, Long> {
 			""", nativeQuery = true)
 	List<Long> findStudentRollNosByLabSessionId(@Param("x")String labSessionId);
 
-	@Query(value = "SELECT * FROM lab_session_entity WHERE lab_code = :x", nativeQuery = true)
+	@Query(value = "select * from lab_session_entity where lab_code = :x and session_status = true", nativeQuery = true)
 	List<LabSessionEntity> findAllByLabCode(@Param("x") String labCode);
 
 	@Query(value = "select * from lab_session_entity order by session_status desc", nativeQuery = true)

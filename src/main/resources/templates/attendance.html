@@ -21,8 +21,18 @@
         <div class="form-group row">
             <label for="labCode" class="col-sm-2 col-form-label">Select Lab</label>
             <div class="col-sm-10">
-                <select id="labCode" class="form-control" onchange="fetchStudents()">
+                <select id="labCode" class="form-control" onchange="fetchSessions()">
                     <option value="" disabled selected>Select a lab...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Session Selection -->
+        <div class="form-group row">
+            <label for="sessionCode" class="col-sm-2 col-form-label">Select Session</label>
+            <div class="col-sm-10">
+                <select id="sessionCode" class="form-control" onchange="fetchStudents()">
+                    <option value="" disabled selected>Select a session...</option>
                 </select>
             </div>
         </div>
@@ -43,7 +53,7 @@
     <script>
         // Fetch labs on page load
         function fetchLabs() {
-            const url = `/api/lab/active`;
+            const url = `/api/lab/active`; // Adjust this to your actual endpoint
             const token = localStorage.getItem('token');
 
             fetch(url, {
@@ -72,90 +82,132 @@
                 .catch(error => console.error("Error fetching active labs:", error));
         }
 
-        document.addEventListener("DOMContentLoaded", fetchLabs);
-
-        // Fetch students for the selected lab
-        function fetchStudents() {
+        // Fetch sessions for the selected lab
+        function fetchSessions() {
             const labCode = document.getElementById("labCode").value;
             if (!labCode) return;
 
             const token = localStorage.getItem("token");
 
-            fetch(`/api/lab/user/${labCode}`, {
+            fetch(`/api/session/lab/${labCode}`, {
                 method: "GET",
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
             })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("Failed to fetch students");
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    const studentsSection = document.getElementById("studentsSection");
-                    const studentsList = document.getElementById("studentsList");
-                    studentsList.innerHTML = "";
+                    const sessionCodeSelect = document.getElementById("sessionCode");
+                    sessionCodeSelect.innerHTML = `<option value="" disabled selected>Select a session...</option>`;
 
-                    const students = data.students?.[0]?.students || [];
-
-                    if (students.length === 0) {
-                        const noStudentsMsg = document.createElement("li");
-                        noStudentsMsg.className = "list-group-item text-center";
-                        noStudentsMsg.textContent = "No students enrolled in this lab.";
-                        studentsList.appendChild(noStudentsMsg);
-                    } else {
-                        students.forEach(student => {
-                            const li = document.createElement("li");
-                            li.className = "list-group-item d-flex justify-content-between align-items-center";
-                            li.innerHTML = `
-                                ${student.name} (Roll No: ${student.rollNo})
-                                <input type="checkbox" class="form-check-input" value="${student.rollNo}">
-                            `;
-                            studentsList.appendChild(li);
-                        });
-                    }
-
-                    studentsSection.style.display = "block";
+                    (data.sessions || []).forEach(session => {
+                        const option = document.createElement("option");
+                        option.value = session.labSessionId; // Use labSessionId as the value
+                        option.textContent = `${session.labSessionDate} (${session.startTime} - ${session.endTime})`;
+                        sessionCodeSelect.appendChild(option);
+                    });
                 })
-                .catch(error => console.error("Error fetching students:", error));
+                .catch(error => console.error("Error fetching sessions:", error));
         }
 
-        // Mark attendance
-		// Mark attendance
-		function markAttendance() {
+        // Fetch students for the selected lab and session
+		function fetchStudents() {
+		    // Get values from input fields
 		    const labCode = document.getElementById("labCode").value;
-		    const checkboxes = document.querySelectorAll("#studentsList input[type=checkbox]");
-		    const presentRollNos = Array.from(checkboxes)
-		        .filter(checkbox => checkbox.checked)
-		        .map(checkbox => checkbox.value);
+		    const sessionId = document.getElementById("sessionCode").value;
 
+		    // Ensure both labCode and sessionId are provided
+		    if (!labCode || !sessionId) return;
+
+		    // Get the token from localStorage
 		    const token = localStorage.getItem("token");
-		    fetch("/api/attendance/mark", {
-		        method: "POST",
-		        headers: {
-		            "Content-Type": "application/json",
-		            "Authorization": `Bearer ${token}`
-		        },
-		        body: JSON.stringify({
-		            labSessionId: labCode,
-		            studentRollNos: presentRollNos
-		        })
-		    })
-		        .then(response => response.json())
-		        .then(data => {
-		            alert(data.message || "Attendance marked successfully");
 
-		            // Redirect to dashboard after successful attendance marking
-		            window.location.href = "/api/auth/dashboard"; // Replace with your actual dashboard URL
+		    // Fetch students from the API
+		    fetch(`/api/lab/user/${labCode}`, {
+		        method: "GET",
+		        headers: {
+		            "Authorization": `Bearer ${token}`
+		        }
+		    })
+		        .then(response => {
+		            if (!response.ok) {
+		                // Handle response errors gracefully
+		                throw new Error("Failed to fetch students");
+		            }
+		            return response.json(); // Parse JSON response
+		        })
+		        .then(data => {
+		            // Elements for student list and section
+		            const studentsSection = document.getElementById("studentsSection");
+		            const studentsList = document.getElementById("studentsList");
+		            studentsList.innerHTML = ""; // Clear the list
+
+		            // Extract students from the response (nested inside studentData)
+		            const students = data.studentData[0]?.students || []; // Adjusted based on the response structure
+
+		            if (students.length === 0) {
+		                // Show a message when no students are enrolled
+		                const noStudentsMsg = document.createElement("li");
+		                noStudentsMsg.className = "list-group-item text-center";
+		                noStudentsMsg.textContent = "No students enrolled in this session.";
+		                studentsList.appendChild(noStudentsMsg);
+		            } else {
+		                // Render the student list
+		                students.forEach(student => {
+		                    const li = document.createElement("li");
+		                    li.className = "list-group-item d-flex justify-content-between align-items-center";
+		                    li.innerHTML = `
+		                        ${student.name || "Unknown"} (Roll No: ${student.rollNo || "N/A"})
+		                        <input type="checkbox" class="form-check-input" value="${student.rollNo}">
+		                    `;
+		                    studentsList.appendChild(li);
+		                });
+		            }
+
+		            // Make the students section visible
+		            studentsSection.style.display = "block";
 		        })
 		        .catch(error => {
-		            console.error("Error marking attendance:", error);
-		            alert("Failed to mark attendance. Please try again.");
+		            // Log errors to the console for debugging
+		            console.error("Error fetching students:", error);
 		        });
 		}
 
+
+        // Mark attendance
+        function markAttendance() {
+            const sessionId = document.getElementById("sessionCode").value;
+            const checkboxes = document.querySelectorAll("#studentsList input[type=checkbox]");
+            const presentRollNos = Array.from(checkboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value);
+
+            const token = localStorage.getItem("token");
+
+            fetch("/api/attendance/mark", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    labSessionId: sessionId,
+                    studentRollNos: presentRollNos
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message || "Attendance marked successfully");
+                    window.location.href = '/api/auth/dashboard';
+                })
+                .catch(error => {
+                    console.error("Error marking attendance:", error);
+                    alert("Failed to mark attendance. Please try again.");
+                });
+        }
+
+        // Initialize page by fetching labs
+        document.addEventListener("DOMContentLoaded", fetchLabs);
     </script>
 
     <!-- Bootstrap JS -->

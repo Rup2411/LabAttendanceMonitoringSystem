@@ -51,7 +51,7 @@
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    const labData = data.labSession;
+                    const labData = data.activeLabs;
                     console.log(labData)
                     document.getElementById('labDescription').value = labData.labDescription || '';
                     document.getElementById('maxCapacity').value = labData.maxCapacity || '';
